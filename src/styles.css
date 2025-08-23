@@ -1,0 +1,17 @@
+
+* { box-sizing: border-box; font-family: Inter, system-ui, Arial; }
+body { margin: 0; padding: 16px; background: #f5f7fb; color: #111827; }
+.app { max-width: 1200px; margin: 0 auto; }
+.header { display:flex; align-items:center; justify-content:space-between; margin-bottom: 12px;}
+.filters { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:12px;}
+.filter { background:white; padding:8px; border-radius:8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);}
+.table-wrap { background:white; padding:12px; border-radius:8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.data-table { width:100%; border-collapse: collapse; }
+.data-table th, .data-table td { padding:8px; border-bottom:1px solid #eee; text-align:center; }
+.table-scroller { height: 420px; overflow:auto; } /* show ~20 rows depending on row height */
+.pagination { display:flex; gap:8px; align-items:center; margin-top:8px;}
+.btn { padding:6px 10px; background:#2563eb; color:white; border-radius:6px; cursor:pointer; border:none; }
+.btn:disabled { background:#93c5fd; cursor:not-allowed; }
+.search-input { width:160px; padding:6px; border-radius:6px; border:1px solid #ddd; }
+.small-muted { color:#6b7280; font-size:13px; }
+.checkbox-list { max-height:180px; overflow:auto; margin-top:6px; }
