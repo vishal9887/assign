@@ -1,31 +1,30 @@
+// src/utils/loadCsv.ts
+
 export type Row = {
   id: number;
   value: number;
-  mod3: number | null;
-  mod4: number | null;
-  mod5: number | null;
-  mod6: number | null;
+  mod3: number;
+  mod4: number;
+  mod5: number;
+  mod6: number;
 };
 
-export async function loadCSV(path: string): Promise<Row[]> {
-  const res = await fetch(path);
+export async function loadCSV(): Promise<Row[]> {
+  // Import CSV as raw text using Vite/CRA
+  const res = await fetch("/src/data/dataset_small.csv"); // ✅ Correct path
   const txt = await res.text();
   const lines = txt.trim().split("\n");
-  lines.shift(); // remove header row
+  const header = lines.shift()!.split(",");
 
-  return lines.map((line, i) => {
+  return lines.map(line => {
     const cols = line.split(",");
-    const id = Number(cols[0]);
-    const val = Number(cols[1]);
-
-    // compute mods dynamically
     return {
-      id: isNaN(id) ? i : id,
-      value: isNaN(val) ? 0 : val,
-      mod3: isNaN(val) ? null : val % 3,
-      mod4: isNaN(val) ? null : val % 4,
-      mod5: isNaN(val) ? null : val % 5,
-      mod6: isNaN(val) ? null : val % 6,
+      id: Number(cols[0]),
+      value: Number(cols[1]),
+      mod3: Number(cols[2]),
+      mod4: Number(cols[3]),
+      mod5: Number(cols[4]),
+      mod6: Number(cols[5]),
     };
   });
 }
