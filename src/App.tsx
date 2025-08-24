@@ -1,68 +1,94 @@
-import React, { useEffect, useMemo, useState } from 'react'
-import { loadCSV, Row } from './utils/loadCsv'
-import { computeAvailableOptions, applyFilters } from './utils/filtering'
-import MultiFilter from './components/MultiFilter'
-import DataTable from './components/DataTable'
+import { useEffect, useState } from "react";
+import Papa from "papaparse";
+import { computeAvailableOptions, applyFilters } from "./utils/filtering";
+import type { Row } from "./utils/loadCsv";
 
-type FilterState = {
-  [col: string]: number[]; // selected values for each filter
-}
-
-const FILTER_COLS = ['mod3', 'mod4', 'mod5', 'mod6']
-
-export default function App() {
-  const [data, setData] = useState<Row[]>([])
-  const [filters, setFilters] = useState<FilterState>({})
-  const [availableOptions, setAvailableOptions] = useState<{[k:string]: number[]}>({})
-  const [page, setPage] = useState(1)
-  const pageSize = 100
+function App() {
+  const [rows, setRows] = useState<Row[]>([]);
+  const [filters, setFilters] = useState<{ [key: string]: string }>({});
+  const [availableOptions, setAvailableOptions] = useState<
+    Record<string, string[]>
+  >({});
 
   useEffect(() => {
-    loadCSV('/src/data/dataset_small.csv').then(rows => {
-      setData(rows)
-      // initialize available options
-      const initial = computeAvailableOptions(rows, {}, FILTER_COLS)
-      setAvailableOptions(initial)
-    })
-  }, [])
+    async function loadData() {
+      // ✅ Import CSV directly (placed in src/data/data.csv)
+      const response = await fetch("/src/data/data.csv");
+      const text = await response.text();
 
-  // when filters change, recompute available options and filtered data
-  useEffect(() => {
-    const avail = computeAvailableOptions(data, filters, FILTER_COLS)
-    setAvailableOptions(avail)
-    setPage(1)
-  }, [filters, data])
+      Papa.parse<Row>(text, {
+        header: true,
+        dynamicTyping: true,
+        complete: (result) => {
+          const parsedRows = result.data.filter((row) => row.id !== undefined);
+          setRows(parsedRows);
+          setAvailableOptions(computeAvailableOptions(parsedRows, {}));
+        },
+      });
+    }
+    loadData();
+  }, []);
 
-  const filtered = useMemo(() => applyFilters(data, filters), [data, filters])
+  const handleFilterChange = (column: string, value: string) => {
+    const newFilters = { ...filters, [column]: value };
+    setFilters(newFilters);
+    const filteredRows = applyFilters(rows, newFilters);
+    setAvailableOptions(computeAvailableOptions(filteredRows, newFilters));
+  };
+
+  const filteredRows = applyFilters(rows, filters);
 
   return (
-    <div className="app">
-      <div className="header">
-        <h2>Filter Dashboard — demo</h2>
-        <div className="small-muted">Rows: {filtered.length} (total {data.length})</div>
-      </div>
+    <div className="p-4">
+      <h1 className="text-xl font-bold mb-4">Filter Dashboard</h1>
 
-      <div className="filters" role="region" aria-label="filters">
-        {FILTER_COLS.map(col => (
-          <div className="filter" key={col}>
-            <MultiFilter
-              column={col}
-              options={availableOptions[col] || []}
-              selected={filters[col] || []}
-              onChange={(vals) => setFilters(prev => ({...prev, [col]: vals}))}
-            />
+      {/* Filters */}
+      <div className="flex gap-4 mb-4">
+        {Object.keys(availableOptions).map((column) => (
+          <div key={column}>
+            <label className="block text-sm font-medium mb-1">{column}</label>
+            <select
+              className="border p-1"
+              value={filters[column] || ""}
+              onChange={(e) => handleFilterChange(column, e.target.value)}
+            >
+              <option value="">All</option>
+              {availableOptions[column].map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
           </div>
         ))}
       </div>
 
-      <div className="table-wrap">
-        <DataTable
-          data={filtered}
-          page={page}
-          pageSize={pageSize}
-          onPageChange={setPage}
-        />
-      </div>
+      {/* Table */}
+      <table className="border-collapse border border-gray-400">
+        <thead>
+          <tr>
+            {rows.length > 0 &&
+              Object.keys(rows[0]).map((key) => (
+                <th key={key} className="border border-gray-400 px-2 py-1">
+                  {key}
+                </th>
+              ))}
+          </tr>
+        </thead>
+        <tbody>
+          {filteredRows.map((row, index) => (
+            <tr key={index}>
+              {Object.values(row).map((value, i) => (
+                <td key={i} className="border border-gray-400 px-2 py-1">
+                  {String(value)}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
-  )
+  );
 }
+
+export default App;
